@@ -21,7 +21,7 @@ export const insertMany = async ({model, data} = {}) => {
     return await model.insertMany(data);
 };
 
-export const findById = async ({model, id, select="", option:{}}={}) => {
+export const findById = async ({model, id, select="", option={}}={}) => {
     
     const doc = model.findById(id);
     if(select.length) doc.select(select);
