@@ -29,7 +29,7 @@ export const getSignature = ({signatureLevel = SignatureEnum.USER})=>{
             break;
         default:
             segature.accessSignature = ACCESS_TOKEN_USER_SECRET;
-            refreshSignature = REFRESH_TOKEN_USER_SECRET;
+            segature.refreshSignature = REFRESH_TOKEN_USER_SECRET;
             break;
     }
     return segature;

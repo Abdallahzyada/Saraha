@@ -18,3 +18,8 @@ export const SignatureEnum = {
     Admin:0,
     User:1
 };
+
+export const TokenTypeEnum = {
+    Access:0,
+    Refresh:1
+};

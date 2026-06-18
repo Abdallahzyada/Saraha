@@ -6,12 +6,7 @@ import { NotFoundException } from "../../Utils/response/error.response.js";
 import { decrypt } from "../../Utils/security/encryption.security.js";
 
 export const getProfile = async (req, res) => {
-    const {authorization} = req.headers;
-
-    const payload = jwt.verify(authorization, ACCESS_TOKEN_SECRET);
-
-    const user = await findById({model:userModel, id:payload.id});
-    if(!user) throw NotFoundException("User not found");
-    user.phone = decrypt(user.phone)
+    const {user} = req;
+    if(user.phone) user.phone = decrypt(user.phone);
     successResponse({res, statusCode:200, data:{user}});
 }
