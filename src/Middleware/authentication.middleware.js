@@ -1,7 +1,7 @@
 import { findById } from "../DB/database.repository.js";
 import userModel from "../DB/Models/user.model.js";
 import { SignatureEnum, TokenTypeEnum } from "../Utils/enums/user.enum.js";
-import { NotFoundException } from "../Utils/response/error.response.js";
+import { ForbeddenException, NotFoundException } from "../Utils/response/error.response.js";
 import { getSignature, verifyToken } from "../Utils/tokens/token.js";
 
 export const decodedToken = async ({authorization, 
@@ -38,5 +38,12 @@ export const authentication = ({tokenType=TokenTypeEnum.Access, })=>{
         req.decoded = decoded;
         return next();
     };
+};
 
+export const authorization = ({accessRole = [] })=>{
+    return async (req, res, next) => {
+        if(!accessRole.includes(req.user.role))
+            throw ForbeddenException("Unauthorized access");
+        return next();
+    };
 };

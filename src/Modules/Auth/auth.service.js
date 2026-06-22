@@ -7,6 +7,9 @@ import { successResponse } from "../../Utils/response/success.response.js";
 import { decrypt, encrypt } from "../../Utils/security/encryption.security.js";
 import { compareHash, generateHash } from "../../Utils/security/hash.security.js";
 import { generateToken, getNewLoginCredentials } from "../../Utils/tokens/token.js";
+import {OAuth2Client} from'google-auth-library';
+import { CLIENT_ID } from "../../../Config/config.service.js";
+import { ProviderEnum } from "../../Utils/enums/user.enum.js";
 
 export const signUp = async (req, res) => {
     try {
@@ -54,3 +57,62 @@ export const logIn = async (req, res) => {
         return globalErrorHandler(error, req, res);
     }
 };
+
+export const refreshToken = async (req, res) => {
+    const {accessToken} = await getNewLoginCredentials(req.user);
+    return successResponse({res, statusCode:200, data:{accessToken}, message:"Done"});
+}
+
+async function verifyGoogleToken(idToken) {
+    const client = new OAuth2Client();
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    return payload;
+};
+export const loginWithGoogle = async (req, res) => {
+    const {idToken} = req.body;
+    const {email, email_verified, given_name, family_name, picture} = await verifyGoogleToken(idToken);
+    if(!email_verified) throw BadRequestException("Email not verified");
+    const user = await findOne({model: userModel, filter:{email}});
+
+    if(user){
+        if(user.provider === ProviderEnum.GOOGLE){
+            const credential = await getNewLoginCredentials(user);
+            successResponse({
+                res,
+                data:{
+                    messsge:"Login Successfully",
+                    credential,
+                },
+                statusCode:200
+            });
+        };
+    }
+
+    const newUser = await create({model:userModel,
+        data:[
+            {
+                firstName: given_name,
+                lastName: family_name,
+                email,
+                profilePic: picture,
+                provider: ProviderEnum.GOOGLE
+            }
+
+        ]
+    });
+    console.log(newUser);
+    
+    const credential = await getNewLoginCredentials(newUser);
+        successResponse({
+            res,
+            data:{
+                messsge:"Login Successfully",
+                credential
+            },
+            statusCode:201
+        });
+    };
