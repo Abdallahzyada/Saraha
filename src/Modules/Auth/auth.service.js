@@ -73,46 +73,49 @@ async function verifyGoogleToken(idToken) {
     return payload;
 };
 export const loginWithGoogle = async (req, res) => {
-    const {idToken} = req.body;
-    const {email, email_verified, given_name, family_name, picture} = await verifyGoogleToken(idToken);
-    if(!email_verified) throw BadRequestException("Email not verified");
-    const user = await findOne({model: userModel, filter:{email}});
+    try {
+        const {idToken} = req.body;
+        const {email, email_verified, given_name, family_name, picture} = await verifyGoogleToken(idToken);
+        if(!email_verified) throw BadRequestException("Email not verified");
+        const user = await findOne({model: userModel, filter:{email}});
 
-    if(user){
-        if(user.provider === ProviderEnum.GOOGLE){
-            const credential = await getNewLoginCredentials(user);
-            successResponse({
+        if(user){
+            if(user.provider === ProviderEnum.GOOGLE){
+                const credential = await getNewLoginCredentials(user);
+                return successResponse({
+                    res,
+                    data:{
+                        messsge:"Login Successfully",
+                        credential,
+                    },
+                    statusCode:200
+                });
+            };
+        }
+
+        const newUser = await create({model:userModel,
+            data:[
+                {
+                    firstName: given_name,
+                    lastName: family_name,
+                    email,
+                    profilePic: picture,
+                    provider: ProviderEnum.GOOGLE
+                }
+
+            ]
+        });
+
+        const credential = await getNewLoginCredentials(newUser);
+            return successResponse({
                 res,
                 data:{
                     messsge:"Login Successfully",
-                    credential,
+                    credential
                 },
-                statusCode:200
+                statusCode:201
             });
-        };
+    } catch (error) {
+        return globalErrorHandler(error);
     }
-
-    const newUser = await create({model:userModel,
-        data:[
-            {
-                firstName: given_name,
-                lastName: family_name,
-                email,
-                profilePic: picture,
-                provider: ProviderEnum.GOOGLE
-            }
-
-        ]
-    });
-    console.log(newUser);
-    
-    const credential = await getNewLoginCredentials(newUser);
-        successResponse({
-            res,
-            data:{
-                messsge:"Login Successfully",
-                credential
-            },
-            statusCode:201
-        });
-    };
+};
