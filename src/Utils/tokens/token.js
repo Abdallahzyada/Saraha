@@ -6,6 +6,7 @@ import { ACCESS_TOKEN_ADMIN_EXPIRES_IN,
     ACCESS_TOKEN_USER_SECRET, 
     REFRESH_TOKEN_ADMIN_EXPIRES_IN, 
     REFRESH_TOKEN_ADMIN_SECRET, 
+    REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN, 
     REFRESH_TOKEN_USER_EXPIRES_IN, 
     REFRESH_TOKEN_USER_SECRET } from "../../../Config/config.service.js";
 export const generateToken = ({payload, secretKey, option={expiresIn: ACCESS_TOKEN_EXPIRES_IN}})=>{
@@ -35,7 +36,7 @@ export const getSignature = ({signatureLevel = SignatureEnum.USER})=>{
     return segature;
 };
 
-export const getNewLoginCredentials = async (user)=>{
+export const getNewLoginCredentials = async (user, rememberMe=false)=>{
     let signature = await getSignature({signatureLevel: 
         user.role != RoleEnum.ADMIN ? SignatureEnum.User: SignatureEnum.Admin
     });
@@ -48,7 +49,8 @@ export const getNewLoginCredentials = async (user)=>{
     const refreshToken = generateToken({
         payload:{id:user._id},
         secretKey: signature.refreshSignature,
-        option:{expiresIn: user.role != RoleEnum.ADMIN ? Number(REFRESH_TOKEN_USER_EXPIRES_IN): Number(REFRESH_TOKEN_ADMIN_EXPIRES_IN)}
+        option:{expiresIn: rememberMe ? REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN
+            :user.role != RoleEnum.ADMIN ? Number(REFRESH_TOKEN_USER_EXPIRES_IN): Number(REFRESH_TOKEN_ADMIN_EXPIRES_IN)}
     });
 
     return {accessToken, refreshToken};

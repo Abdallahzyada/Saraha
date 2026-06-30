@@ -37,7 +37,7 @@ export const signUp = async (req, res) => {
 
 export const logIn = async (req, res) => {
     try {
-        const { email, password} = req.body;
+        const { email, password, rememberMe} = req.body;
 
         const user = await findOne({model: userModel, filter:{email}});
         if(!user) 
@@ -50,7 +50,7 @@ export const logIn = async (req, res) => {
         });
 
         if(!isMatch)throw BadRequestException("Invalid Password or email");
-        const tokens = await getNewLoginCredentials(user)
+        const tokens = await getNewLoginCredentials(user, rememberMe);
 
         return successResponse({res:res, statusCode:200, message:"User logged in ", data: { tokens }});
     } catch (error) {
